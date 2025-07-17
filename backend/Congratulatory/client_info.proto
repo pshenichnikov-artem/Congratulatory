@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option csharp_namespace = "ClientInfo.Grpc";
+
+service ClientInfoService {
+  rpc SendClientInfo (BotClientInfo) returns (StatusResponse);
+}
+
+message BotClientInfo {
+  int64 chat_id = 1;
+  string username = 2;
+  string platform = 3;
+}
+
+message StatusResponse {
+  bool success = 1;
+  string message = 2;
+}

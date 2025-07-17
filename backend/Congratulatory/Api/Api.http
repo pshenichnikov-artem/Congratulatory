@@ -1,0 +1,58 @@
+@Api_HostAddress = http://localhost:5108
+
+### Регистрация пользователя
+POST {{Api_HostAddress}}/api/v1/user/register
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "userName": "TestUser",
+  "password": "password123"
+}
+
+### Вход пользователя
+POST {{Api_HostAddress}}/api/v1/user/login
+Content-Type: application/json
+
+{
+  "email": "user@example.com",
+  "password": "password123"
+}
+
+### Получить текущего пользователя
+GET {{Api_HostAddress}}/api/v1/user/me
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+### Обновить профиль пользователя
+PUT {{Api_HostAddress}}/api/v1/user/me
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "userName": "UpdatedUser",
+  "email": "updated@example.com"
+}
+
+### Сменить пароль
+PUT {{Api_HostAddress}}/api/v1/user/me/password
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "currentPassword": "password123",
+  "newPassword": "newpassword123"
+}
+
+### Обновить настройки уведомлений
+PUT {{Api_HostAddress}}/api/v1/user/me/notifications
+Content-Type: application/json
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+{
+  "notifyByEmail": true,
+  "notifyByTelegram": false,
+  "notifyByVK": true,
+  "daysBefore": 3
+}
+
+###

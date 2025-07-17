@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option csharp_namespace = "NotificationService.Grpc";
+
+service NotificationService {
+  rpc GetTodayNotifications (Empty) returns (NotificationList);
+  rpc MarkNotificationSent (MarkSentRequest) returns (Empty);
+}
+
+message NotificationData {
+  int64 id = 1;
+  string birthday_person_name = 2;
+  int64 chat_id = 3;
+  string platform = 4;
+  string relationship_type = 5;
+  string dateOfBirth = 6;
+}
+
+message NotificationList {
+  repeated NotificationData notifications = 1;
+}
+
+message MarkSentRequest {
+  int64 notification_id = 1;
+}
+
+message Empty {}

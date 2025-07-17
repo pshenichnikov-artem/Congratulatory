@@ -1,0 +1,110 @@
+version: '3.8'
+
+networks:
+  internal_network:
+    driver: bridge
+
+services:
+  api:
+    build:
+      context: ./backend/Congratulatory
+      dockerfile: Api/Dockerfile
+    container_name: api
+    ports:
+      - "${CONGRATS_API_HTTP_PORT}:${Kestrel__HttpPort}"
+      - "${Kestrel__GrpcPort}:${Kestrel__GrpcPort}"
+    environment:
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=${JWT_ISSUER}
+      - Jwt__Audience=${JWT_AUDIENCE}
+      - Kestrel__HttpPort=${Kestrel__HttpPort}
+      - Kestrel__GrpcPort=${Kestrel__GrpcPort}
+      - FrontendUrl=${FRONTEND_URL}
+    depends_on:
+      - db
+    entrypoint: ["/wait-for-it.sh", "db", "5432", "--", "dotnet", "CoreService.Api.dll"]
+    networks:
+      internal_network:
+        aliases:
+          - api.congratulatory
+
+  telegram_bot:
+    build:
+      context: ./backend/Congratulatory
+      dockerfile: TelegramBot/Dockerfile
+    container_name: telegram_bot
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - Bots__Telegram__Token=${TELEGRAM_BOT_TOKEN}
+      - Bots__Telegram__GrpcPort=${TELEGRAM_PORT}
+      - Api__Address=${CONGRATS_API_GRPC_URL}
+      - Api__FrontendUrl=${FRONTEND_URL}
+    depends_on:
+      - api
+    networks:
+      - internal_network
+
+  vk_bot:
+    build:
+      context: ./backend/Congratulatory
+      dockerfile: VkBot/Dockerfile
+    container_name: vk_bot
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - Bots__Vk__Token=${VK_BOT_TOKEN}
+      - Bots__Vk__GrpcPort=${VK_PORT}
+      - Api__Address=${CONGRATS_API_GRPC_URL}
+      - Api__FrontendUrl=${FRONTEND_URL}
+    depends_on:
+      - api
+    networks:
+      - internal_network
+
+  birthday_worker:
+    build:
+      context: ./backend/Congratulatory
+      dockerfile: BirthdayNotificationWorker/Dockerfile
+    container_name: birthday_worker
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__ApiAddress=${CONGRATS_API_GRPC_URL}
+      - ConnectionStrings__TelegramBotAddress=${TELEGRAM_GRPC_ADDRESS}
+      - ConnectionStrings__VkBotAddress=${VK_GRPC_ADDRESS}
+    depends_on:
+      - api
+      - telegram_bot
+      - vk_bot
+    networks:
+      - internal_network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: ${CONGRATS_API_HTTP_URL}
+    container_name: frontend
+    environment:
+      - VITE_API_URL=${CONGRATS_API_HTTP_URL}
+    ports:
+      - "${FRONTEND_PORT}:80"
+    depends_on:
+      - api
+    networks:
+      - internal_network
+
+  db:
+    image: postgres:16
+    container_name: db
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal_network
+
+volumes:
+  pgdata:

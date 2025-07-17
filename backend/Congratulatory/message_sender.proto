@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option csharp_namespace = "MessageSender.Grpc";
+
+service MessageSenderService {
+  rpc SendMessage (MessageRequest) returns (StatusResponse);
+}
+
+message MessageRequest {
+  int64 chat_id = 1;
+  string text = 2;
+}
+
+message StatusResponse {
+  bool success = 1;
+  string message = 2;
+}
